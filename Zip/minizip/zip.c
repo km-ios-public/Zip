@@ -971,6 +971,8 @@ extern int ZEXPORT zipOpenNewFileInZip4_64(zipFile file, const char* filename, c
     uInt size_extrafield_global, const char* comment, int method, int level, int raw, int windowBits, int memLevel,
     int strategy, const char* password, uLong crcForCrypting, uLong versionMadeBy, uLong flagBase, int zip64)
 {
+    zip64 = 1; // forcely set to 64
+
     zip64_internal* zi;
     uInt size_filename;
     uInt size_comment = 0;
