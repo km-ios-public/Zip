@@ -128,28 +128,28 @@ public class Zip {
         progressTracker.kind = ProgressKind.file
         
         // Begin unzipping
-        let zip = unzOpen64(path)
+        let zip = kmUnzOpen64(path)
         defer {
-            unzClose(zip)
+            kmUnzClose(zip)
         }
-        if unzGoToFirstFile(zip) != UNZ_OK {
+        if kmUnzGoToFirstFile(zip) != UNZ_OK {
             throw ZipError.unzipFail
         }
         repeat {
             if let cPassword = password?.cString(using: String.Encoding.ascii) {
-                ret = unzOpenCurrentFilePassword(zip, cPassword)
+                ret = kmUnzOpenCurrentFilePassword(zip, cPassword)
             }
             else {
-                ret = unzOpenCurrentFile(zip);
+                ret = kmUnzOpenCurrentFile(zip);
             }
             if ret != UNZ_OK {
                 throw ZipError.unzipFail
             }
             var fileInfo = unz_file_info64()
             memset(&fileInfo, 0, MemoryLayout<unz_file_info>.size)
-            ret = unzGetCurrentFileInfo64(zip, &fileInfo, nil, 0, nil, 0, nil, 0)
+            ret = kmUnzGetCurrentFileInfo64(zip, &fileInfo, nil, 0, nil, 0, nil, 0)
             if ret != UNZ_OK {
-                unzCloseCurrentFile(zip)
+                kmUnzCloseCurrentFile(zip)
                 throw ZipError.unzipFail
             }
             currentPosition += Double(fileInfo.compressed_size)
@@ -157,7 +157,7 @@ public class Zip {
             //let fileName = UnsafeMutablePointer<CChar>(allocatingCapacity: fileNameSize)
             let fileName = UnsafeMutablePointer<CChar>.allocate(capacity: fileNameSize)
 
-            unzGetCurrentFileInfo64(zip, &fileInfo, fileName, UInt(fileNameSize), nil, 0, nil, 0)
+            kmUnzGetCurrentFileInfo64(zip, &fileInfo, fileName, UInt(fileNameSize), nil, 0, nil, 0)
             fileName[Int(fileInfo.size_filename)] = 0
 
             var pathString = String(cString: fileName)
@@ -201,15 +201,15 @@ public class Zip {
                 }
             } catch {}
             if fileManager.fileExists(atPath: fullPath) && !isDirectory && !overwrite {
-                unzCloseCurrentFile(zip)
-                ret = unzGoToNextFile(zip)
+                kmUnzCloseCurrentFile(zip)
+                ret = kmUnzGoToNextFile(zip)
             }
 
             var writeBytes: UInt64 = 0
             var filePointer: UnsafeMutablePointer<FILE>?
             filePointer = fopen(fullPath, "wb")
             while filePointer != nil {
-                let readBytes = unzReadCurrentFile(zip, &buffer, bufferSize)
+                let readBytes = kmUnzReadCurrentFile(zip, &buffer, bufferSize)
                 if readBytes > 0 {
                     guard fwrite(buffer, Int(readBytes), 1, filePointer) == 1 else {
                         throw ZipError.unzipFail
@@ -223,7 +223,7 @@ public class Zip {
 
             if let fp = filePointer { fclose(fp) }
 
-            crc_ret = unzCloseCurrentFile(zip)
+            crc_ret = kmUnzCloseCurrentFile(zip)
             if crc_ret == UNZ_CRCERROR {
                 throw ZipError.unzipFail
             }
@@ -244,7 +244,7 @@ public class Zip {
                 }
             }
 
-            ret = unzGoToNextFile(zip)
+            ret = kmUnzGoToNextFile(zip)
             
             // Update progress handler
             if let progressHandler = progress{
